@@ -1,0 +1,205 @@
+[colors]
+background = #BB282A36
+background-alt = #8361cb
+foreground = #F8F8F2
+primary = #F8F8F2
+secondary = #F8F8F2
+alert = #FF5555
+disabled = #707880
+
+white = #FFFFFF
+black = #15121C
+red = #f07178
+green = #c3e88d
+yellow = #ffcb6b
+blue = #82aaff
+purple = #c792ea
+cyan = #89ddff
+pink = #ffa8c5
+orange = #dd864a
+
+[bar/master]
+monitor = ${env:MONITOR:}
+width = 100%
+height = 22pt
+
+line-size = 3
+
+radius = 6.0
+fixed-center = false
+
+border-size = 3
+border-color = #00000000
+
+background = ${colors.background}
+foreground = ${colors.foreground}
+
+padding-left = 2
+padding-right = 25
+
+tray-detached = true
+tray-offset-x = -5
+tray-offset-y = 0
+tray-padding = 2
+tray-maxsize = 20
+tray-scale = 1.0
+tray-position = right
+
+module-margin = 1
+separator = |
+separator-foreground = ${colors.disabled}
+
+font-0 = SF Mono:style=Regular:size=11
+font-1 = Twemoji:style=Regular:scale=6
+font-2 = Hack Nerd Font:style=Regular
+font-3 = Hack Nerd Font Mono:style=Regular
+font-4 = Material Icons:style=Regular
+font-5 = NotoEmoji Nerd Font:style=Book
+
+modules-left = i3 vpn clock date
+modules-right = headset pulseaudio filesystem memory cpu
+
+cursor-click = pointer
+cursor-scroll = ns-resize
+
+enable-ipc = true
+wm-restack = i3
+
+[bar/left]
+inherit = bar/master
+monitor = HDMI-0
+
+[bar/center]
+inherit = bar/master
+monitor = DP-4
+
+[bar/right]
+inherit = bar/master
+monitor = DVI-D-0
+
+[module/i3]
+type = internal/i3
+format = <label-state> <label-mode>
+index-sort = true
+wrapping-scroll = false
+pin-workspaces = true
+
+label-mode-padding = 2
+label-mode-foreground = #000
+label-mode-background = ${colors.primary}
+
+label-focused = %{F#fff}%name%%{F-}
+label-focused-background = ${colors.background}
+label-focused-underline= ${colors.blue}
+label-focused-padding = 2
+
+label-unfocused = %{F#aaa}%name%%{F-}
+label-unfocused-padding = 2
+label-unfocused-background = ${colors.background}
+
+label-visible = %index%
+label-visible-background = ${self.label-focused-background}
+label-visible-underline = ${colors.background-alt}
+label-visible-padding = ${self.label-focused-padding}
+
+label-urgent = ${self.label-focused}
+label-urgent-background = ${colors.alert}
+label-urgent-padding = 2
+
+label-separator-background = ${colors.background-mod}
+label-separator-foreground = ${colors.foreground-alt}
+
+ws-icon-0 = I
+ws-icon-1 = II
+ws-icon-2 = III
+ws-icon-3 = IV
+ws-icon-4 = V
+ws-icon-5 = VI
+ws-icon-6 = VII
+ws-icon-7 = VIII
+ws-icon-8 = IX
+ws-icon-9 = X
+
+[module/vpn]
+type = custom/script
+exec = ~/Scripts/protonvpn/protonvpn
+interval = 5
+env-disconnected_fmt = "VPN: (${Status})"
+env-connected_fmt = "VPN: ${IP} | K.S (${Kill Switch}) - ${Server}"
+
+[module/filesystem]
+type = internal/fs
+interval = 25
+mount-0 = /
+fixed-values = true
+format-mounted = <label-mounted>
+format-mounted-prefix = 💾
+format-mounted-prefix-foreground = ${colors.orange}
+format-mounted-background = ${colors.background}
+format-mounted-padding = 2
+label-mounted = " %used%/%total% (%percentage_used%%)"
+
+[module/memory]
+type = internal/memory
+interval = 1
+format = <label>
+format-prefix = "🐏 "
+format-prefix-foreground = ${colors.purple}
+format-background = ${colors.background}
+format-padding = 2
+label = "%gb_used%/%total% (%percentage_used%%)"
+
+[module/cpu]
+type = internal/cpu
+interval = 1
+format = <label>
+format-prefix = "CPU: "
+format-prefix-foreground = ${colors.green}
+format-background = ${colors.background2}
+format-padding = 2
+label = "%percentage%%"
+
+[module/title]
+type = internal/xwindow
+format = <label>
+format-prefix = ""
+format-foreground = ${colors.foreground}
+format-background = ${colors.background}
+format-padding = 2
+label = " %title%"
+label-maxlen = 30
+label-empty = " Desktop"
+
+[module/headset]
+type = custom/script
+exec = ~/Scripts/headset_bat.py
+interval = 10
+
+[module/pulseaudio]
+type = internal/pulseaudio
+format-volume-prefix = "🔈 "
+format-volume-prefix-foreground = ${colors.primary}
+format-volume = <label-volume>
+label-volume = %percentage%%
+label-muted = 🔇
+label-muted-foreground = ${colors.disabled}
+
+
+[module/date]
+type = internal/date
+interval = 1
+date = "%d-%m / %Y"
+format = "📅 <label>"
+label = %date%
+
+[module/clock]
+type = internal/date
+interval = 1
+time = %H:%M
+label = %time%
+format = "🕑 <label>"
+
+
+[settings]
+screenchange-reload = true
+pseudo-transparency = true

@@ -1,0 +1,64 @@
+#!/usr/bin/env kscript
+
+import java.util.concurrent.TimeUnit
+import java.lang.ProcessBuilder.Redirect
+
+fun String.proc(): String =
+    ProcessBuilder(*split(" ").toTypedArray())
+        .redirectOutput(ProcessBuilder.Redirect.PIPE)
+        .redirectError(ProcessBuilder.Redirect.PIPE)
+        .start()
+        .inputStream.bufferedReader()
+        .readText()
+
+fun connected(data: List<String>) {
+    val tags = """
+        Status
+        Time
+        IP
+        Server
+        Features
+        Protocol
+        Kill Switch
+        Country
+        City
+        Load
+        Received
+        Sent
+    """.trimIndent().split("\n").zip(data).toMap()
+
+    val fmt = System.getenv("connected_fmt")
+    val res = """\$\{(.*?)}""".toRegex().replace(fmt) {
+        tags[it.groupValues[1]]!!
+    }
+
+    println(res)
+}
+
+fun disconnected(data: List<String>) {
+    val tags = """
+        Status
+        IP
+        ISP
+    """.trimIndent().split("\n").zip(data).toMap()
+
+    val fmt = System.getenv("disconnected_fmt")
+    val res = """\$\{(.*?)}""".toRegex().replace(fmt) {
+        tags[it.groupValues[1]]!!
+    }
+    println(res)
+}
+
+val proton = "protonvpn status".proc()
+    .split("\n")
+    .filter(String::isNotEmpty)
+    .drop(2)
+    .map {
+        it.replace(Regex("^[^:]+:\\s*"), "")
+    }
+
+if (proton.first() == "Connected") {
+    connected(proton)
+} else {
+    disconnected(proton)
+}

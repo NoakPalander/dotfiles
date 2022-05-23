@@ -1,0 +1,61 @@
+# List of valid properties:
+# align
+# color
+# command
+# full_text
+# instance
+# interval
+# label
+# min_width
+# name
+# separator
+# separator_block_width
+# short_text
+# signal
+# urgent
+
+# Global properties
+command=$SCRIPT_DIR/$BLOCK_NAME
+separator_block_width=15
+markup=none
+
+# -- Custom config --
+[protonvpn]
+command=~/Scripts/protonvpn/protonvpn
+interval=5
+disconnected_fmt=VPN: ${IP} (${Status})
+connected_fmt=VPN: [${IP} | ${Protocol}/${Features} | K.S (${Kill Switch}) - ${Server} ]
+
+[volume-pulseaudio]
+command=~/.config/i3blocks/volume-pulseaudio/volume-pulseaudio
+interval=1
+signal=10
+LONG_FORMAT="${SYMB}${VOL}%"
+
+[epoch]
+command='headset_bat'
+interval=10
+step=5%
+
+[TIME_DATE]
+command=date +" 📅 %a, %d %b - 🕑 %l:%M %p"
+interval=1
+color=#c0d6e4
+
+[disk_root]
+command=~/.config/i3blocks/disk_usage/disk_usage format="{used:.1f}G/{total:.1f}G ({perc_used:.1f}%)"
+label=💾
+instance=/
+interval=30
+warn_threshold=70
+
+[memory]
+command=~/.config/i3blocks/memory/memory
+label=🐏
+interval=15
+color=#00B4EB
+
+
+[cpu_usage]
+command=~/.config/i3blocks/cpu_usage/cpu_usage
+interval=10
