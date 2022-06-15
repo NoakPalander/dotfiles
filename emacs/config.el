@@ -3,7 +3,7 @@
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
-(setq package-selected-packages '(flycheck company helm-xref irony lsp-treemacs helm-lsp python-mode cmake-project))
+(setq package-selected-packages '(flycheck company helm-xref irony lsp-treemacs helm-lsp python-mode cmake-project elixir-mode mix))
 
 (when (cl-find-if-not #'package-installed-p package-selected-packages)
   (package-refresh-contents)
@@ -30,6 +30,31 @@
   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   (require 'dap-cpptools)
   (yas-global-mode))
+
+; -- Elixir --
+(use-package lsp-mode
+  :commands lsp
+  :ensure t
+  :diminish lsp-mode
+  :hook
+  (elixir-mode . lsp)
+  :init
+  (add-to-list 'exec-path "/usr/lib/elixir-ls/"))
+
+
+(defun mix-run (&optional prefix use-umbrella-subprojects)
+  "Run the mix escript.build command.
+If PREFIX is non-nil, prompt for additional params.  See `mix--prompt`
+IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
+  (interactive "P")
+  (let ((project-root (if use-umbrella-subprojects (mix--umbrella-subproject-prompt) (mix--project-root))))
+    (mix--start nil "App" project-root prefix)))
+
+(add-hook 'elixir-mode-hook
+          (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
+
+(add-hook 'elixir-mode-hook
+          (lambda () (add-hook 'before-save-hook 'elixir-format nil t)))
 
 ; -- C/C++ --
 (defun custom-c++-mode-hook ()
@@ -91,6 +116,13 @@
 (defun generate-buffer ()
   (interactive)
   (switch-to-buffer (make-temp-name "scratch")))
+
+(defun sudo-save ()
+  (interactive)
+  (if (not buffer-file-name)
+      (write-file (concat "/sudo:root@localhost:" (ido-read-file-name "File:")))
+    (write-file (concat "/su
+do:root@localhost:" buffer-file-name))))
 
 ; Remove some truely evil keybindings
 (define-key evil-insert-state-map (kbd "C-w") nil)
