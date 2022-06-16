@@ -28,8 +28,7 @@
 
 (with-eval-after-load 'lsp-mode
   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-  (require 'dap-cpptools)
-  (yas-global-mode))
+  (require 'dap-cpptools))
 
 ; -- Elixir --
 (use-package lsp-mode
@@ -39,7 +38,9 @@
   :hook
   (elixir-mode . lsp)
   :init
-  (add-to-list 'exec-path "/usr/lib/elixir-ls/"))
+  (add-to-list 'exec-path "/usr/lib/elixir-ls/")
+  :config
+  (setq lsp-elixir-suggest-specs nil))
 
 
 (defun mix-run (&optional prefix use-umbrella-subprojects)
@@ -49,6 +50,9 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
   (interactive "P")
   (let ((project-root (if use-umbrella-subprojects (mix--umbrella-subproject-prompt) (mix--project-root))))
     (mix--start nil "App" project-root prefix)))
+
+(add-hook 'elixir-mode-hook
+          (lambda () (setenv "LC_ALL" "en_US.UTF-8")))
 
 (add-hook 'elixir-mode-hook
           (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
