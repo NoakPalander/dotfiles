@@ -86,22 +86,21 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
 ; -- Python --
-(use-package python-mode
+(use-package pyvenv
   :ensure t
-  :hook (python-mode . lsp-deferred)
-  :custom
-  (python-shell-interpreter "python3")
   :config
-  (require 'dap-python))
+  (pyvenv-mode 1))
 
-(use-package company-jedi
+(use-package lsp-mode
+  :commands lsp
   :ensure t
-  :config
-  (defun my/python-mode-hook ()
-    (add-to-list 'company-backends 'company-jedi))
-  (add-hook 'python-mode-hook 'jedi:setup)
-  (add-hook 'python-mode-hook 'my/python-mode-hook)
-  (setq jedi:complete-on-dot t))
+  :diminish lsp-mode
+  :hook
+  (python-mode . lsp)
+  :init)
+
+(use-package lsp-ui
+  :commands lsp-ui-mode)
 
 ; -- Misc --
 

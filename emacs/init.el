@@ -61,6 +61,7 @@
        :lang
        (cc +lsp)
        (python +lsp)
+       (elixir +lsp)
 
        :config
        (default +bindings))
