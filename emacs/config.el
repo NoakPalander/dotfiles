@@ -54,8 +54,7 @@
   (elixir-mode . lsp)
   :init
   (add-to-list 'exec-path "/usr/lib/elixir-ls/")
-  :config
-  (setq lsp-elixir-suggest-specs nil))
+  :config (setq lsp-elixir-suggest-specs nil))
 
 
 (defun mix-run (&optional prefix use-umbrella-subprojects)
@@ -133,7 +132,15 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
 
 ; Font
 (use-package fira-code-mode
-;  :custom (fira-code-mode-disabled-ligatures '("[]", "=="))
+  :custom (fira-code-mode-disabled-ligatures '("[]"
+                                               "::"
+                                               ":"
+                                               "lambda"
+                                               "x"
+                                               "#{"
+                                               "#_"
+                                               "#_("
+                                               "+"))
   :hook prog-mode)
 
 ; Sets the transparency
