@@ -3,12 +3,27 @@
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
-(setq package-selected-packages '(flycheck company helm-xref irony lsp-treemacs helm-lsp python-mode cmake-project elixir-mode mix))
+(setq package-selected-packages '(fira-code-mode
+                                  uwu-theme
+                                  flycheck
+                                  company
+                                  helm-xref
+                                  irony
+                                  lsp-treemacs
+                                  treemacs-all-the-icons
+                                  helm-lsp
+                                  python-mode
+                                  cmake-project
+                                  elixir-mode mix
+                                  move-text))
 
 (when (cl-find-if-not #'package-installed-p package-selected-packages)
   (package-refresh-contents)
   (mapc #'package-install package-selected-packages))
 
+; -- Treemacs --
+(use-package treemacs-all-the-icons
+  :after treemacs)
 
 ; -- Company/LSP --
 (use-package company
@@ -55,10 +70,16 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
           (lambda () (setenv "LC_ALL" "en_US.UTF-8")))
 
 (add-hook 'elixir-mode-hook
-          (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
-
-(add-hook 'elixir-mode-hook
           (lambda () (add-hook 'before-save-hook 'elixir-format nil t)))
+
+
+; Build hook
+(add-hook 'elixir-mode-hook
+          (lambda () (local-set-key (kbd "C-c b") 'mix-compile)))
+
+; Run hook
+(add-hook 'elixir-mode-hook
+          (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
 
 ; -- C/C++ --
 (defun custom-c++-mode-hook ()
@@ -107,9 +128,13 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
   :commands lsp-ui-mode)
 
 ; -- Misc --
+(setq doom-theme 'uwu) ; Color theme
 
-; Theme
-(setq doom-theme 'doom-dracula)
+
+; Font
+(use-package fira-code-mode
+;  :custom (fira-code-mode-disabled-ligatures '("[]", "=="))
+  :hook prog-mode)
 
 ; Sets the transparency
 (set-frame-parameter (selected-frame) 'alpha 92)
@@ -127,6 +152,13 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
     (write-file (concat "/su
 do:root@localhost:" buffer-file-name))))
 
+(defun select-current-line ()
+    "Select the current line"
+  (interactive)
+  (end-of-line)
+  (set-mark (line-beginning-position)))
+
+
 ; Remove some truely evil keybindings
 (define-key evil-insert-state-map (kbd "C-w") nil)
 (define-key evil-replace-state-map (kbd "C-w") nil)
@@ -138,3 +170,12 @@ do:root@localhost:" buffer-file-name))))
 (global-set-key (kbd "C-c n") 'generate-buffer)         ; new buffer
 (global-set-key (kbd "C-w") 'clipboard-kill-region)     ; cut
 (global-set-key (kbd "C-c x") 'clipboard-yank)          ; paste
+(global-set-key (kbd "C-c t") 'treemacs)                ; start treemacs
+(global-set-key (kbd "C-c l") 'select-current-line)     ; Selects the current line
+
+; Tab management
+(global-set-key (kbd "M-s M-f") 'tab-bar-new-tab)                       ; Creates a new tab
+(global-set-key (kbd "M-s M-d") 'tab-bar-close-tab)                     ; Closes the tab
+(global-set-key (kbd "M-s M-r") 'tab-bar-rename-tab)                    ; Renames the tab
+(global-set-key (kbd "M-s M-<right>") 'tab-bar-switch-to-next-tab)      ; Move to the next tab (right)
+(global-set-key (kbd "M-s M-<left>") 'tab-bar-switch-to-prev-tab)       ; Move to the previous tab (left)
