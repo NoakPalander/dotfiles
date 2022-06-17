@@ -183,9 +183,6 @@ Transparency
 #+end_src
 
 * Language configurations
-
-[[./icons/elixir.png]]
-
 ** Elixir
 LSP mode for elixir, requires elixir-ls to be installed (e.g from the AUR)
 #+begin_src emacs-lisp
