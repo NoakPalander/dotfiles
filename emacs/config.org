@@ -51,7 +51,7 @@
                                                    :face 'font-lock-keyword-face))
   (setq dashboard-items '((bookmarks . 5) (projects . 5)))
   (setq dashboard-center-content t)
-  (setq dashboard-startup-banner "~/.emacs.d/logo.png")
+  (setq dashboard-startup-banner "~/.emacs.d/icons/logo.png")
 
   (setq dashboard-page-separator "\n\f\n")
   (setq dashboard-set-navigator t)
@@ -183,6 +183,10 @@ Transparency
 #+end_src
 
 * Language configurations
+#+attr_org: :width 100
+#+attr_org: :height 100
+[[./icons/elixir.png]]
+
 ** Elixir
 LSP mode for elixir, requires elixir-ls to be installed (e.g from the AUR)
 #+begin_src emacs-lisp
