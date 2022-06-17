@@ -209,9 +209,6 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
 
 (add-hook 'elixir-mode-hook
           (lambda () (setenv "LC_ALL" "en_US.UTF-8")))
-
-(add-hook 'elixir-mode-hook
-          (lambda () (add-hook 'before-save-hook 'elixir-format nil t)))
 #+end_src
 
 Keybindings for compiling and running mix
@@ -223,7 +220,10 @@ Keybindings for compiling and running mix
 ; Run hook
 (add-hook 'elixir-mode-hook
           (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
-#+end_src
+
+(add-hook 'elixir-mode-hook
+          (lambda () (local-set-key (kbd "C-c g") 'elixir-format)))
+          #+end_src
 
 ** Org mode
 #+begin_src emacs-lisp
