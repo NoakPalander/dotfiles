@@ -183,8 +183,7 @@ Transparency
 #+end_src
 
 * Language configurations
-#+attr_org: :width 100
-#+attr_org: :height 100
+
 [[./icons/elixir.png]]
 
 ** Elixir
