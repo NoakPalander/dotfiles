@@ -1,0 +1,284 @@
+#+title: Config
+#+author: Noak Palander
+#+email: noak.palander@protonmail.com
+#+property: header-args :tangle "config.el"
+#+startup: showeverything
+
+* Custom configuration for doom emacs
+
+** Packages
+#+begin_src emacs-lisp
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+(package-initialize)
+
+; Packages this configuration uses
+(setq package-selected-packages '(org-modern
+                                  dashboard
+                                  fira-code-mode
+                                  flycheck
+                                  company
+                                  helm-xref
+                                  irony
+                                  lsp-treemacs
+                                  treemacs-all-the-icons
+                                  helm-lsp
+                                  python-mode
+                                  cmake-project
+                                  elixir-mode mix
+                                  move-text))
+
+; If these packages aren't loaded, install them
+(when (cl-find-if-not #'package-installed-p package-selected-packages)
+  (package-refresh-contents)
+  (mapc #'package-install package-selected-packages))
+#+end_src
+
+** Dashboard
+#+begin_src emacs-lisp
+(setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
+
+(use-package dashboard
+  :ensure t
+  :init
+  (setq dashboard-banner-logo-title "Welcome back to Emacs")
+  (setq dashboard-footer-messages '("alias vim = \'emacs\'"))
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-footer-icon (all-the-icons-octicon "dashboard"
+                                                   :height 1.1
+                                                   :v-adjust -0.05
+                                                   :face 'font-lock-keyword-face))
+  (setq dashboard-items '((bookmarks . 5) (projects . 5)))
+  (setq dashboard-center-content t)
+  (setq dashboard-startup-banner "~/.emacs.d/logo.png")
+
+  (setq dashboard-page-separator "\n\f\n")
+  (setq dashboard-set-navigator t)
+  (setq dashboard-navigator-buttons
+      `(((,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0)
+         "Github"
+         "Browse github"
+         (lambda (&rest _) (browse-url "github.com/NoakPalander")))
+
+         (,(all-the-icons-octicon "gear" :height 1.1 :v-adjust 0.0)
+         "Dotfiles"
+         "Browse dotfiles"
+         (lambda (&rest _) (browse-url "github.com/NoakPalander/dotfiles")))
+
+         (,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0)
+         "Doom"
+         "Doom emacs"
+         (lambda (&rest _) (browse-url "https://github.com/doomemacs/doomemacs"))))))
+
+  :config
+  (dashboard-setup-startup-hook)
+  (page-break-lines-mode))
+#+end_src
+
+** Treemacs
+#+begin_src emacs-lisp
+(use-package treemacs-all-the-icons
+  :after treemacs)
+#+end_src
+
+** Company mode / LSP mode
+#+begin_src emacs-lisp
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+
+(setq gc-cons-threshold (* 100 1024 1024)
+      read-process-output-max (* 1024 1024)
+      treemacs-space-between-root-nodes nil
+      company-idle-delay 0.0
+      company-minimum-prefix-length 1
+      lsp-idle-delay 0.1)  ;; clangd is fast
+
+(with-eval-after-load 'lsp-mode
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+  (require 'dap-cpptools))
+#+end_src
+
+** Miscellaneous
+Some helper functions used
+#+begin_src emacs-lisp
+; Creates a new file
+(defun generate-buffer ()
+  (interactive)
+  (switch-to-buffer (make-temp-name "scratch")))
+
+; Saves a file by sudo
+(defun sudo-save ()
+  (interactive)
+  (if (not buffer-file-name)
+      (write-file (concat "/sudo:root@localhost:" (ido-read-file-name "File:")))
+    (write-file (concat "/su
+do:root@localhost:" buffer-file-name))))
+
+; Marks the current line
+(defun select-current-line ()
+    "Select the current line"
+  (interactive)
+  (end-of-line)
+  (set-mark (line-beginning-position)))
+#+end_src
+
+Disable automatic tracking by projectile and load the dracula theme
+#+begin_src emacs-lisp
+(setq projectile-track-known-projects-automatically nil)
+(setq doom-theme 'dracula)
+#+end_src
+
+Tabbing
+#+begin_src emacs-lisp
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+(setq indent-line-function 'insert-tab)
+#+end_src
+
+Font ligatures
+#+begin_src emacs-lisp
+(setq disabled-ligatures '("[]" "::" ":" "lambda" "x" "#{" "#_" "#_(" "+" "<<" ">>" "*" "++"))
+(use-package fira-code-mode
+  :custom (fira-code-mode-disabled-ligatures disabled-ligatures)
+  :hook prog-mode)
+#+end_src
+
+Transparency
+#+begin_src emacs-lisp
+(set-frame-parameter (selected-frame) 'alpha 92)
+(add-to-list 'default-frame-alist `(alpha . ,92))
+#+end_src
+
+* Keybindings
+** Remove previous evil-keybinds
+#+begin_src emacs-lisp
+(define-key evil-insert-state-map (kbd "C-w") nil)
+(define-key evil-replace-state-map (kbd "C-w") nil)
+(define-key evil-motion-state-map (kbd "C-y") nil)
+(define-key evil-normal-state-map (kbd "C-p") nil)
+#+end_src
+
+** Custom global keybindings
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-c n") 'generate-buffer)         ; new buffer
+(global-set-key (kbd "C-w") 'clipboard-kill-region)     ; cut
+(global-set-key (kbd "C-c x") 'clipboard-yank)          ; paste
+(global-set-key (kbd "C-c t") 'treemacs)                ; start treemacs
+(global-set-key (kbd "C-c l") 'select-current-line)     ; Selects the current line
+#+end_src
+
+** Frame tabs
+#+begin_src emacs-lisp
+(global-set-key (kbd "M-s M-f") 'tab-bar-new-tab)                       ; Creates a new tab
+(global-set-key (kbd "M-s M-d") 'tab-bar-close-tab)                     ; Closes the tab
+(global-set-key (kbd "M-s M-r") 'tab-bar-rename-tab)                    ; Renames the tab
+(global-set-key (kbd "M-s M-<right>") 'tab-bar-switch-to-next-tab)      ; Move to the next tab (right)
+(global-set-key (kbd "M-s M-<left>") 'tab-bar-switch-to-prev-tab)       ; Move to the previous tab (left)
+#+end_src
+
+* Language configurations
+** Elixir
+LSP mode for elixir, requires elixir-ls to be installed (e.g from the AUR)
+#+begin_src emacs-lisp
+(use-package lsp-mode
+  :commands lsp
+  :ensure t
+  :diminish lsp-mode
+  :hook
+  (elixir-mode . lsp)
+  :init
+  (add-to-list 'exec-path "/usr/lib/elixir-ls/")
+  :config (setq lsp-elixir-suggest-specs nil))
+#+end_src
+
+Elixir MIX configurations
+#+begin_src emacs-lisp
+(defun mix-run (&optional prefix use-umbrella-subprojects)
+  "Run the mix escript.build command.
+If PREFIX is non-nil, prompt for additional params.  See `mix--prompt`
+IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
+  (interactive "P")
+  (let ((project-root (if use-umbrella-subprojects (mix--umbrella-subproject-prompt) (mix--project-root))))
+    (mix--start nil "App" project-root prefix)))
+
+(add-hook 'elixir-mode-hook
+          (lambda () (setenv "LC_ALL" "en_US.UTF-8")))
+
+(add-hook 'elixir-mode-hook
+          (lambda () (add-hook 'before-save-hook 'elixir-format nil t)))
+#+end_src
+
+Keybindings for compiling and running mix
+#+begin_src emacs-lisp
+; Build hook
+(add-hook 'elixir-mode-hook
+          (lambda () (local-set-key (kbd "C-c b") 'mix-compile)))
+
+; Run hook
+(add-hook 'elixir-mode-hook
+          (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
+#+end_src
+
+** Org mode
+#+begin_src emacs-lisp
+(use-package org
+  :mode (("\\.org$" . org-mode))
+  :ensure t
+  :config
+  (setq org-support-shift-select t)
+  (global-org-modern-mode))
+#+end_src
+
+** C/C++
+*** Todo on this, fix use-package and lsp mode
+#+begin_src emacs-lisp
+(defun custom-c++-mode-hook ()
+  (setq c++-tab-always-indent t)
+  (setq c-basic-offset 4)
+  (setq c-indent-level 4)
+  (setq tab-stop-list '(4 8 12 16 20 24 28 32 36 40 44 48 52 56 60))
+  (setq tab-width 4)
+  (setq indent-tabs-mode t))
+
+(which-key-mode)
+(add-hook 'c-mode-common-hook 'custom-c++-mode-hook)
+(add-hook 'c++-mode-hook 'treemacs)
+
+; C-hook
+(defun my-c-mode-common-hook ()
+  ;; my customizations for all of c-mode, c++-mode, objc-mode, java-mode
+  (c-set-offset 'substatement-open 0)
+  ;; other customizations can go here
+
+  (setq c++-tab-always-indent t)
+  (setq c-basic-offset 4)                  ;; Default is 2
+  (setq c-indent-level 4)                  ;; Default is 2
+
+  (setq tab-stop-list '(4 8 12 16 20 24 28 32 36 40 44 48 52 56 60))
+  (setq tab-width 4)
+  (setq indent-tabs-mode t))  ; use spaces only if nil
+
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+#+end_src
+
+** Python
+#+begin_src emacs-lisp
+(use-package pyvenv
+  :ensure t
+  :config
+  (pyvenv-mode 1))
+
+(use-package lsp-mode
+  :commands lsp
+  :ensure t
+  :diminish lsp-mode
+  :hook
+  (python-mode . lsp)
+  :init)
+#+end_src
