@@ -4,6 +4,11 @@
 #+property: header-args :tangle "config.el"
 #+startup: showeverything
 
+** TODO:
+- Read-only mode shortcut
+- Window/frame splitting
+- Tabs customization
+
 * Custom configuration for doom emacs
 
 ** Packages
@@ -13,7 +18,9 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(org-modern
+(setq package-selected-packages '(uwu-theme
+                                  visual-fill-column
+                                  org-modern
                                   dashboard
                                   flycheck
                                   company
@@ -67,6 +74,74 @@
   (page-break-lines-mode))
 #+end_src
 
+** Miscellaneous
+Some helper functions used
+#+begin_src emacs-lisp
+; Generates hooks for compiling running and formatting source code
+(defmacro build-hooks (mode compile-target run-target format-target)
+  `(list (add-hook ,mode (lambda () (local-set-key (kbd "C-c b") ,compile-target)))
+    (add-hook ,mode (lambda () (local-set-key (kbd "C-c r") ,run-target)))
+    (add-hook ,mode (lambda () (local-set-key (kbd "C-c g") ,format-target)))))
+
+; Center org buffers
+(defun center-org-buffers ()
+  (setq visual-fill-column-width 100
+        visual-fill-column-center-text t)
+  (visual-fill-column-mode 1))
+
+(defun code-block-color ()
+  (set-face-attribute 'org-block nil :background
+                      (color-darken-name
+                       (face-attribute 'default :background) 3)))
+
+; Creates a new temp file
+(defun generate-buffer ()
+  (interactive)
+  (switch-to-buffer (make-temp-name "scratch")))
+
+; Saves a file by sudo
+(defun sudo-save ()
+  (interactive)
+  (if (not buffer-file-name)
+      (write-file (concat "/sudo:root@localhost:" (ido-read-file-name "File:")))
+    (write-file (concat "/su
+do:root@localhost:" buffer-file-name))))
+
+; Marks the current line
+(defun select-current-line ()
+    "Select the current line"
+  (interactive)
+  (end-of-line)
+  (set-mark (line-beginning-position)))
+#+end_src
+
+Font & Theme
+#+begin_src emacs-lisp
+(set-frame-font "JetBrains Mono")
+(load-theme 'uwu)
+#+end_src
+
+Projectile
+#+begin_src emacs-lisp
+(use-package projectile
+  :ensure t
+  :config
+  (setq projectile-track-known-projects-automatically nil))
+#+end_src
+
+Tabbing
+#+begin_src emacs-lisp
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+(setq indent-line-function 'insert-tab)
+#+end_src
+
+Transparency
+#+begin_src emacs-lisp
+(set-frame-parameter (selected-frame) 'alpha 92)
+(add-to-list 'default-frame-alist `(alpha . ,92))
+#+end_src
+
 ** Treemacs
 #+begin_src emacs-lisp
 (use-package treemacs-all-the-icons
@@ -95,54 +170,6 @@
   (require 'dap-cpptools))
 #+end_src
 
-** Miscellaneous
-Fonts
-#+begin_src emacs-lisp
-(set-frame-font "JetBrains Mono")
-#+end_src
-
-Some helper functions used
-#+begin_src emacs-lisp
-; Creates a new temp file
-(defun generate-buffer ()
-  (interactive)
-  (switch-to-buffer (make-temp-name "scratch")))
-
-; Saves a file by sudo
-(defun sudo-save ()
-  (interactive)
-  (if (not buffer-file-name)
-      (write-file (concat "/sudo:root@localhost:" (ido-read-file-name "File:")))
-    (write-file (concat "/su
-do:root@localhost:" buffer-file-name))))
-
-; Marks the current line
-(defun select-current-line ()
-    "Select the current line"
-  (interactive)
-  (end-of-line)
-  (set-mark (line-beginning-position)))
-#+end_src
-
-Disable automatic tracking by projectile and load the dracula theme
-#+begin_src emacs-lisp
-(setq projectile-track-known-projects-automatically nil)
-(setq doom-theme 'dracula)
-#+end_src
-
-Tabbing
-#+begin_src emacs-lisp
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-(setq indent-line-function 'insert-tab)
-#+end_src
-
-Transparency
-#+begin_src emacs-lisp
-(set-frame-parameter (selected-frame) 'alpha 92)
-(add-to-list 'default-frame-alist `(alpha . ,92))
-#+end_src
-
 * Keybindings
 ** Remove previous evil-keybinds
 #+begin_src emacs-lisp
@@ -160,6 +187,7 @@ Transparency
 (global-set-key (kbd "C-c x") 'clipboard-yank)          ; paste
 (global-set-key (kbd "C-c t") 'treemacs)                ; start treemacs
 (global-set-key (kbd "C-c l") 'select-current-line)     ; Selects the current line
+(global-set-key (kbd "C-c a") 'read-only-mode)          ; Toggles read-only-mode
 #+end_src
 
 ** Frame tabs
@@ -167,8 +195,8 @@ Transparency
 (global-set-key (kbd "M-s M-f") 'tab-bar-new-tab)                       ; Creates a new tab
 (global-set-key (kbd "M-s M-d") 'tab-bar-close-tab)                     ; Closes the tab
 (global-set-key (kbd "M-s M-r") 'tab-bar-rename-tab)                    ; Renames the tab
-(global-set-key (kbd "M-s M-<right>") 'tab-bar-switch-to-next-tab)      ; Move to the next tab (right)
-(global-set-key (kbd "M-s M-<left>") 'tab-bar-switch-to-prev-tab)       ; Move to the previous tab (left)
+(global-set-key (kbd "M-s M-<right>") 'tab-bar-switch-to-next-tab)      ; ->
+(global-set-key (kbd "M-s M-<left>") 'tab-bar-switch-to-prev-tab)       ; <-
 #+end_src
 
 * Language configurations
@@ -192,13 +220,11 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
   :diminish lsp-mode
   :hook
   ((elixir-mode . lsp)
-   (elixir-mode . (lambda () (local-set-key (kbd "C-c b") 'mix-compile)))
-   (elixir-mode . (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
-   (elixir-mode . (lambda () (local-set-key (kbd "C-c g") 'elixir-format)))
    (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8"))))
 
   :init
   (add-to-list 'exec-path "/usr/lib/elixir-ls/")
+  (build-hooks 'elixir-mode-hook 'mix-compile 'mix-run 'elixir-format)
 
   :config
   (setq lsp-elixir-suggest-specs nil))
@@ -207,13 +233,24 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
 ** Org mode
 #+begin_src emacs-lisp
 (use-package org
-  :mode (("\\.org$" . org-mode))
   :ensure t
-  :hook ('org-mode-hook . (lambda () (local-set-key (kbd "C-c r") 'org-edit-src-code)))
+  :hook
+  ((org-mode . center-org-buffers)
+   (org-mode . (lambda () (display-line-numbers-mode -1)))))
+
   :config
+  (build-hooks 'org-mode-hook 'org-export-dispatch 'org-edit-src-code nil)
   (setq org-support-shift-select t)
   (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)))
   (global-org-modern-mode))
+
+(require 'org-tempo)
+(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+
+(require 'color)
+(set-face-attribute 'org-block nil :background
+                      (color-darken-name
+                       (face-attribute 'default :background) 5))
 #+end_src
 
 ** C/C++
