@@ -15,7 +15,6 @@
 ; Packages this configuration uses
 (setq package-selected-packages '(org-modern
                                   dashboard
-                                  fira-code-mode
                                   flycheck
                                   company
                                   helm-xref
@@ -37,39 +36,31 @@
 ** Dashboard
 #+begin_src emacs-lisp
 (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
-
 (use-package dashboard
   :ensure t
   :init
-  (setq dashboard-banner-logo-title "Welcome back to Emacs")
-  (setq dashboard-footer-messages '("alias vim = \'emacs\'"))
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-set-file-icons t)
-  (setq dashboard-footer-icon (all-the-icons-octicon "dashboard"
+
+  (setq dashboard-banner-logo-title "Welcome back to Emacs"
+        dashboard-footer-messages '("alias vim = \'emacs\'")
+        dashboard-set-heading-icons t
+        dashboard-set-file-icons t
+        dashboard-footer-icon (all-the-icons-octicon "dashboard"
                                                    :height 1.1
                                                    :v-adjust -0.05
-                                                   :face 'font-lock-keyword-face))
-  (setq dashboard-items '((bookmarks . 5) (projects . 5)))
-  (setq dashboard-center-content t)
-  (setq dashboard-startup-banner "~/.emacs.d/icons/logo.png")
+                                                   :face 'font-lock-keyword-face)
+        dashboard-items '((bookmarks . 5) (projects . 5))
+        dashboard-center-content t
+        dashboard-startup-banner "~/.emacs.d/icons/logo.png"
+        dashboard-page-separator "\n\f\n"
+        dashboard-set-navigator t
+        dashboard-navigator-buttons `(((,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0)
+                                        "Github" "Browse github" (lambda (&rest _) (browse-url "github.com/NoakPalander")))
 
-  (setq dashboard-page-separator "\n\f\n")
-  (setq dashboard-set-navigator t)
-  (setq dashboard-navigator-buttons
-      `(((,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0)
-         "Github"
-         "Browse github"
-         (lambda (&rest _) (browse-url "github.com/NoakPalander")))
+                                       (,(all-the-icons-octicon "gear" :height 1.1 :v-adjust 0.0) "Dotfiles" "Browse dotfiles"
+                                        (lambda (&rest _) (browse-url "github.com/NoakPalander/dotfiles")))
 
-         (,(all-the-icons-octicon "gear" :height 1.1 :v-adjust 0.0)
-         "Dotfiles"
-         "Browse dotfiles"
-         (lambda (&rest _) (browse-url "github.com/NoakPalander/dotfiles")))
-
-         (,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0)
-         "Doom"
-         "Doom emacs"
-         (lambda (&rest _) (browse-url "https://github.com/doomemacs/doomemacs"))))))
+                                       (,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0) "Doom" "Doom emacs"
+                                        (lambda (&rest _) (browse-url "https://github.com/doomemacs/doomemacs"))))))
 
   :config
   (dashboard-setup-startup-hook)
@@ -105,9 +96,14 @@
 #+end_src
 
 ** Miscellaneous
+Fonts
+#+begin_src emacs-lisp
+(set-frame-font "JetBrains Mono")
+#+end_src
+
 Some helper functions used
 #+begin_src emacs-lisp
-; Creates a new file
+; Creates a new temp file
 (defun generate-buffer ()
   (interactive)
   (switch-to-buffer (make-temp-name "scratch")))
@@ -141,14 +137,6 @@ Tabbing
 (setq indent-line-function 'insert-tab)
 #+end_src
 
-Font ligatures
-#+begin_src emacs-lisp
-(setq disabled-ligatures '("[]" "::" ":" "lambda" "x" "#{" "#_" "#_(" "+" "<<" ">>" "*" "++"))
-(use-package fira-code-mode
-  :custom (fira-code-mode-disabled-ligatures disabled-ligatures)
-  :hook prog-mode)
-#+end_src
-
 Transparency
 #+begin_src emacs-lisp
 (set-frame-parameter (selected-frame) 'alpha 92)
@@ -166,6 +154,7 @@ Transparency
 
 ** Custom global keybindings
 #+begin_src emacs-lisp
+;(global-set-key (kbd "C-x r") ')
 (global-set-key (kbd "C-c n") 'generate-buffer)         ; new buffer
 (global-set-key (kbd "C-w") 'clipboard-kill-region)     ; cut
 (global-set-key (kbd "C-c x") 'clipboard-yank)          ; paste
@@ -184,20 +173,7 @@ Transparency
 
 * Language configurations
 ** Elixir
-LSP mode for elixir, requires elixir-ls to be installed (e.g from the AUR)
-#+begin_src emacs-lisp
-(use-package lsp-mode
-  :commands lsp
-  :ensure t
-  :diminish lsp-mode
-  :hook
-  (elixir-mode . lsp)
-  :init
-  (add-to-list 'exec-path "/usr/lib/elixir-ls/")
-  :config (setq lsp-elixir-suggest-specs nil))
-#+end_src
-
-Elixir MIX configurations
+Elixir MIX run helper
 #+begin_src emacs-lisp
 (defun mix-run (&optional prefix use-umbrella-subprojects)
   "Run the mix escript.build command.
@@ -206,32 +182,37 @@ IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
   (interactive "P")
   (let ((project-root (if use-umbrella-subprojects (mix--umbrella-subproject-prompt) (mix--project-root))))
     (mix--start nil "App" project-root prefix)))
-
-(add-hook 'elixir-mode-hook
-          (lambda () (setenv "LC_ALL" "en_US.UTF-8")))
 #+end_src
 
-Keybindings for compiling and running mix
+LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
 #+begin_src emacs-lisp
-; Build hook
-(add-hook 'elixir-mode-hook
-          (lambda () (local-set-key (kbd "C-c b") 'mix-compile)))
+(use-package lsp-mode
+  :commands lsp
+  :ensure t
+  :diminish lsp-mode
+  :hook
+  ((elixir-mode . lsp)
+   (elixir-mode . (lambda () (local-set-key (kbd "C-c b") 'mix-compile)))
+   (elixir-mode . (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
+   (elixir-mode . (lambda () (local-set-key (kbd "C-c g") 'elixir-format)))
+   (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8"))))
 
-; Run hook
-(add-hook 'elixir-mode-hook
-          (lambda () (local-set-key (kbd "C-c r") 'mix-run)))
+  :init
+  (add-to-list 'exec-path "/usr/lib/elixir-ls/")
 
-(add-hook 'elixir-mode-hook
-          (lambda () (local-set-key (kbd "C-c g") 'elixir-format)))
-          #+end_src
+  :config
+  (setq lsp-elixir-suggest-specs nil))
+#+end_src
 
 ** Org mode
 #+begin_src emacs-lisp
 (use-package org
   :mode (("\\.org$" . org-mode))
   :ensure t
+  :hook ('org-mode-hook . (lambda () (local-set-key (kbd "C-c r") 'org-edit-src-code)))
   :config
   (setq org-support-shift-select t)
+  (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)))
   (global-org-modern-mode))
 #+end_src
 
