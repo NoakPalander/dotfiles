@@ -5,9 +5,8 @@
 #+startup: showeverything
 
 ** TODO:
-- Read-only mode shortcut
-- Window/frame splitting
-- Tabs customization
+- Dont open dashboard if a file was opened directly
+- Dont open scratch buffer and hide message buffer
 
 * Custom configuration for doom emacs
 
@@ -18,7 +17,9 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(uwu-theme
+(setq package-selected-packages '(centaur-tabs
+                                  ace-window
+                                  dracula-theme
                                   visual-fill-column
                                   org-modern
                                   dashboard
@@ -42,13 +43,12 @@
 
 ** Dashboard
 #+begin_src emacs-lisp
-(setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
 (use-package dashboard
   :ensure t
   :init
-
+  (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
   (setq dashboard-banner-logo-title "Welcome back to Emacs"
-        dashboard-footer-messages '("alias vim = \'emacs\'")
+        dashboard-footer-messages '("alias vim = 'emacs'")
         dashboard-set-heading-icons t
         dashboard-set-file-icons t
         dashboard-footer-icon (all-the-icons-octicon "dashboard"
@@ -83,6 +83,30 @@ Some helper functions used
     (add-hook ,mode (lambda () (local-set-key (kbd "C-c r") ,run-target)))
     (add-hook ,mode (lambda () (local-set-key (kbd "C-c g") ,format-target)))))
 
+; Toggles the show-buffer or show-tabs modes
+(defun toggle-show-groups ()
+  (interactive)
+  (if (equal t centaur-tabs--buffer-show-groups)
+      (setq centaur-tabs--buffer-show-groups nil)
+    (setq centaur-tabs--buffer-show-groups t)))
+
+(defun centaur-tabs-buffer-groups ()
+  (list
+   (cond
+    ((or (string-equal "*" (substring (buffer-name) 0 1))
+         (memq major-mode '(magit-process-mode
+                            magit-status-mode
+                            magit-diff-mode
+                            magit-log-mode
+                            magit-file-mode
+                            magit-blob-mode
+                            magit-blame-mode)))
+     "Emacs")
+    ((derived-mode-p 'prog-mode)
+     "Editing")
+    ((derived-mode-p 'dired-mode)
+     "Dired"))))
+
 ; Center org buffers
 (defun center-org-buffers ()
   (setq visual-fill-column-width 100
@@ -107,7 +131,7 @@ Some helper functions used
     (write-file (concat "/su
 do:root@localhost:" buffer-file-name))))
 
-; Marks the current line
+; Selects the current line
 (defun select-current-line ()
     "Select the current line"
   (interactive)
@@ -115,10 +139,13 @@ do:root@localhost:" buffer-file-name))))
   (set-mark (line-beginning-position)))
 #+end_src
 
+#+RESULTS:
+: select-current-line
+
 Font & Theme
 #+begin_src emacs-lisp
 (set-frame-font "JetBrains Mono")
-(load-theme 'uwu)
+(load-theme 'dracula)
 #+end_src
 
 Projectile
@@ -142,6 +169,42 @@ Transparency
 (add-to-list 'default-frame-alist `(alpha . ,92))
 #+end_src
 
+** Ace window
+#+begin_src emacs-lisp
+(use-package ace-window
+  :ensure t
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-background nil
+        aw-minibuffer-flag t)
+  (ace-window-display-mode 1))
+
+#+end_src
+
+** Centaur tabs
+#+begin_src emacs-lisp
+; https://github.com/ema2159/centaur-tabs
+(use-package centaur-tabs
+  :ensure t
+  :demand
+  :config
+  (setq centaur-tabs-style "alternate"
+        centaur-tabs-height 32
+        centaur-tabs-set-icons t
+        centaur-tabs-set-bar 'under
+        x-underline-at-descent-line t
+        centaur-tabs-set-close-button nil
+        centaur-tabs-show-new-tab-button nil
+        ;centaur-tabs--buffer-show-groups t
+        centaur-tabs-cycle-scope 'tabs
+        centaur-tabs-set-modified-marker t
+        centaur-tabs-modified-marker "●")
+
+  (centaur-tabs-headline-match)
+  (centaur-tabs-change-fonts "JetBrains Mono" 100)
+  (centaur-tabs-mode t))
+#+end_src
+
 ** Treemacs
 #+begin_src emacs-lisp
 (use-package treemacs-all-the-icons
@@ -153,22 +216,22 @@ Transparency
 (use-package company
   :after lsp-mode
   :hook (lsp-mode . company-mode)
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
-
-
-(setq gc-cons-threshold (* 100 1024 1024)
+  :config
+  (setq gc-cons-threshold (* 100 1024 1024)
       read-process-output-max (* 1024 1024)
       treemacs-space-between-root-nodes nil
       company-idle-delay 0.0
       company-minimum-prefix-length 1
-      lsp-idle-delay 0.1)  ;; clangd is fast
+      lsp-idle-delay 0.1)
 
-(with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-  (require 'dap-cpptools))
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0)
+  :after
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration))
+
 #+end_src
+
+#+RESULTS:
 
 * Keybindings
 ** Remove previous evil-keybinds
@@ -181,7 +244,10 @@ Transparency
 
 ** Custom global keybindings
 #+begin_src emacs-lisp
-;(global-set-key (kbd "C-x r") ')
+(global-set-key (kbd "C-c C-<up>") 'enlarge-window)     ; Increase window size in split
+(global-set-key (kbd "C-c C-<down>") 'shrink-window)    ; Decrease window size in split
+(global-set-key (kbd "C-x t") 'rotate:tiled)            ; Rotates layout to a tiled mode
+(global-set-key (kbd "M-o") 'ace-window)                ; aw
 (global-set-key (kbd "C-c n") 'generate-buffer)         ; new buffer
 (global-set-key (kbd "C-w") 'clipboard-kill-region)     ; cut
 (global-set-key (kbd "C-c x") 'clipboard-yank)          ; paste
@@ -190,13 +256,14 @@ Transparency
 (global-set-key (kbd "C-c a") 'read-only-mode)          ; Toggles read-only-mode
 #+end_src
 
-** Frame tabs
+** Centaur tabs
 #+begin_src emacs-lisp
-(global-set-key (kbd "M-s M-f") 'tab-bar-new-tab)                       ; Creates a new tab
-(global-set-key (kbd "M-s M-d") 'tab-bar-close-tab)                     ; Closes the tab
-(global-set-key (kbd "M-s M-r") 'tab-bar-rename-tab)                    ; Renames the tab
-(global-set-key (kbd "M-s M-<right>") 'tab-bar-switch-to-next-tab)      ; ->
-(global-set-key (kbd "M-s M-<left>") 'tab-bar-switch-to-prev-tab)       ; <-
+(global-set-key (kbd "M-s M-f") 'centaur-tabs--create-new-tab)         ; New tab
+(global-set-key (kbd "M-s M-d") 'toggle-show-groups)                   ; Toggle tab/group view
+(global-set-key (kbd "M-s M-<up>") 'centaur-tabs-forward-group)        ; Next group
+(global-set-key (kbd "M-s M-<down>") 'centaur-tabs-backward-group)     ; Prev. group
+(global-set-key (kbd "M-s M-<right>") 'centaur-tabs-forward-tab)       ; Next tab
+(global-set-key (kbd "M-s M-<left>") 'centaur-tabs-backward-tab)       ; Prev tab
 #+end_src
 
 * Language configurations
@@ -236,7 +303,7 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
   :ensure t
   :hook
   ((org-mode . center-org-buffers)
-   (org-mode . (lambda () (display-line-numbers-mode -1)))))
+   (org-mode . (lambda () (display-line-numbers-mode -1))))
 
   :config
   (build-hooks 'org-mode-hook 'org-export-dispatch 'org-edit-src-code nil)
