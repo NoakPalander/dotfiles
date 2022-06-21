@@ -5,6 +5,7 @@
 #+startup: showeverything
 
 ** TODO:
+- Bind <backtab>
 - Dont open dashboard if a file was opened directly
 - Dont open scratch buffer and hide message buffer
 
@@ -17,7 +18,10 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(centaur-tabs
+(setq package-selected-packages '(json-mode
+                                  lsp-mode
+                                  lsp-ui
+                                  centaur-tabs
                                   ace-window
                                   dracula-theme
                                   visual-fill-column
@@ -89,6 +93,10 @@ Some helper functions used
   (if (equal t centaur-tabs--buffer-show-groups)
       (setq centaur-tabs--buffer-show-groups nil)
     (setq centaur-tabs--buffer-show-groups t)))
+
+(defun toggle-show-docs ()
+  (interactive)
+  )
 
 (defun centaur-tabs-buffer-groups ()
   (list
@@ -246,7 +254,7 @@ Transparency
 #+begin_src emacs-lisp
 (global-set-key (kbd "C-c C-<up>") 'enlarge-window)     ; Increase window size in split
 (global-set-key (kbd "C-c C-<down>") 'shrink-window)    ; Decrease window size in split
-(global-set-key (kbd "C-x t") 'rotate:tiled)            ; Rotates layout to a tiled mode
+(global-set-key (kbd "C-x t") 'rotate:main-horizontal)  ; Rotates layout to a stacked mode
 (global-set-key (kbd "M-o") 'ace-window)                ; aw
 (global-set-key (kbd "C-c n") 'generate-buffer)         ; new buffer
 (global-set-key (kbd "C-w") 'clipboard-kill-region)     ; cut
@@ -295,6 +303,13 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
 
   :config
   (setq lsp-elixir-suggest-specs nil))
+
+(use-package lsp-ui
+  :after lsp-mode
+  :ensure t
+  :hook
+  ((lsp-ui-mode . (lambda () (local-set-key (kbd "C-c d") 'lsp-ui-doc-hide)))
+   (lsp-ui-mode . (lambda () (local-set-key (kbd "C-c s") 'lsp-ui-doc-show)))))
 #+end_src
 
 ** Org mode
@@ -318,6 +333,14 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
 (set-face-attribute 'org-block nil :background
                       (color-darken-name
                        (face-attribute 'default :background) 5))
+#+end_src
+
+** Json
+#+begin_src emacs-lisp
+(use-package json-mode
+  :ensure t
+  :init
+  (build-hooks 'json-mode-hook nil nil 'json-pretty-print-buffer))
 #+end_src
 
 ** C/C++
