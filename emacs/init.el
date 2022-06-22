@@ -72,6 +72,7 @@
       [C-p] nil
       [C-y] nil)
 
-(load (concat (file-name-directory load-file-name)
-                "config.el")
-        nil (not init-file-debug))
+(org-babel-load-file "~/.emacs.d/config.org")
+
+;(load (concat (file-name-directory load-file-name) "config.el")
+;      nil (not init-file-debug))
