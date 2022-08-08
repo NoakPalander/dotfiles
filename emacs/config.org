@@ -2,7 +2,7 @@
 #+author: Noak Palander
 #+email: noak.palander@protonmail.com
 #+property: header-args :tangle "config.el"
-#+startup: showeverything
+
 
 ** TODO:
 - Dont open dashboard if a file was opened directly
@@ -17,9 +17,12 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(pyvenv
+(setq package-selected-packages '(clang-format+
+                                  platformio-mode
+                                  pyvenv
                                   page-break-lines
                                   json-mode
+                                  dap-mode
                                   lsp-mode
                                   lsp-ui
                                   centaur-tabs
@@ -31,7 +34,6 @@
                                   flycheck
                                   company
                                   helm-xref
-                                  irony
                                   lsp-treemacs
                                   treemacs-all-the-icons
                                   helm-lsp
@@ -52,7 +54,9 @@
   :ensure t
   :init
   (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
-  (setq dashboard-banner-logo-title "Welcome back to Emacs"
+
+  (setq dashboard-set-init-info nil
+        dashboard-banner-logo-title "Welcome back to Emacs"
         dashboard-footer-messages '("alias vim = 'emacs'")
         dashboard-set-heading-icons t
         dashboard-set-file-icons t
@@ -81,6 +85,41 @@
 
 ** Miscellaneous
 Some helper functions used
+#+begin_src emacs-lisp
+(setq default--transparency 92)
+(set-frame-parameter (selected-frame) 'alpha default--transparency)
+(add-to-list 'default-frame-alist `(alpha . ,default--transparency))
+
+(defun enable-transparency (&optional _)
+  (set-frame-parameter (selected-frame) 'alpha 92))
+
+(defun disable-transparency (&optional _)
+  (set-frame-parameter (selected-frame) 'alpha 100))
+
+(defun toggle-transparency (&optional _)
+  (interactive)
+  (if (< (frame-parameter (selected-frame) 'alpha) 100)
+      (disable-transparency)
+    (enable-transparency)))
+#+end_src
+
+#+begin_src emacs-lisp
+; Elixir run
+(defun mix-run (&optional prefix use-umbrella-subprojects)
+  "Run the mix escript.build command.
+If PREFIX is non-nil, prompt for additional params.  See `mix--prompt`
+IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
+  (interactive "P")
+  (let ((project-root (if use-umbrella-subprojects (mix--umbrella-subproject-prompt) (mix--project-root))))
+    (mix--start nil "App" project-root prefix)))
+#+end_src
+
+#+begin_src emacs-lisp
+(defun cpp-cmake-compile (&optional _)
+  (interactive)
+  (cmake-command-run "--build" cmake-project-build-directory))
+#+end_src
+
 #+begin_src emacs-lisp
 ; Generates hooks for compiling running and formatting source code
 (defmacro build-hooks (mode compile-target run-target format-target)
@@ -148,9 +187,6 @@ do:root@localhost:" buffer-file-name))))
   (set-mark (line-beginning-position)))
 #+end_src
 
-#+RESULTS:
-: select-current-line
-
 Font & Theme
 #+begin_src emacs-lisp
 (set-frame-font "JetBrains Mono")
@@ -172,12 +208,6 @@ Tabbing
 (setq indent-line-function 'insert-tab)
 #+end_src
 
-Transparency
-#+begin_src emacs-lisp
-(set-frame-parameter (selected-frame) 'alpha 92)
-(add-to-list 'default-frame-alist `(alpha . ,92))
-#+end_src
-
 ** Ace window
 #+begin_src emacs-lisp
 (use-package ace-window
@@ -187,7 +217,6 @@ Transparency
         aw-background nil
         aw-minibuffer-flag t)
   (ace-window-display-mode 1))
-
 #+end_src
 
 ** Centaur tabs
@@ -211,6 +240,7 @@ Transparency
 
   (centaur-tabs-headline-match)
   (centaur-tabs-change-fonts "JetBrains Mono" 100)
+  (centaur-tabs-group-by-projectile-project)
   (centaur-tabs-mode t))
 #+end_src
 
@@ -240,8 +270,6 @@ Transparency
 
 #+end_src
 
-#+RESULTS:
-
 * Keybindings
 ** Remove previous evil-keybinds
 #+begin_src emacs-lisp
@@ -253,7 +281,7 @@ Transparency
 
 ** Custom global keybindings
 #+begin_src emacs-lisp
-;(global-set-key (kbd "<backtab>") 'evil-delete)
+(global-set-key (kbd "C-x s") 'save-buffer)
 (global-set-key (kbd "C-c C-<up>") 'enlarge-window)     ; Increase window size in split
 (global-set-key (kbd "C-c C-<down>") 'shrink-window)    ; Decrease window size in split
 (global-set-key (kbd "C-x t") 'rotate:main-horizontal)  ; Rotates layout to a stacked mode
@@ -276,42 +304,32 @@ Transparency
 (global-set-key (kbd "M-s M-<left>") 'centaur-tabs-backward-tab)       ; Prev tab
 #+end_src
 
-* Language configurations
-** Elixir
-Elixir MIX run helper
-#+begin_src emacs-lisp
-(defun mix-run (&optional prefix use-umbrella-subprojects)
-  "Run the mix escript.build command.
-If PREFIX is non-nil, prompt for additional params.  See `mix--prompt`
-IF USE-UMBRELLA-SUBPROJECTS is t, prompt for umbrells subproject."
-  (interactive "P")
-  (let ((project-root (if use-umbrella-subprojects (mix--umbrella-subproject-prompt) (mix--project-root))))
-    (mix--start nil "App" project-root prefix)))
-#+end_src
-
-LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
+* Language configurations & modes
+** LSP & LSP-ui mode
 #+begin_src emacs-lisp
 (use-package lsp-mode
   :commands lsp
   :ensure t
-  :diminish lsp-mode
-  :hook
-  ((elixir-mode . lsp)
-   (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8"))))
-
-  :init
-  (add-to-list 'exec-path "/usr/lib/elixir-ls/")
-  (build-hooks 'elixir-mode-hook 'mix-compile 'mix-run 'elixir-format)
-
-  :config
-  (setq lsp-elixir-suggest-specs nil))
+  :diminish lsp-mode)
 
 (use-package lsp-ui
   :after lsp-mode
   :ensure t
-  :hook
-  ((lsp-ui-mode . (lambda () (local-set-key (kbd "C-c d") 'lsp-ui-doc-hide)))
-   (lsp-ui-mode . (lambda () (local-set-key (kbd "C-c s") 'lsp-ui-doc-show)))))
+  :hook ((lsp-ui-mode . (lambda () (local-set-key (kbd "C-c d") 'lsp-ui-doc-hide)))
+         (lsp-ui-mode . (lambda () (local-set-key (kbd "C-c s") 'lsp-ui-doc-show)))))
+#+end_src
+
+** Elixir
+Elixir package configs
+#+begin_src emacs-lisp
+(use-package elixir-mode
+  :mode ("\\.ex\\'" "\\.exs\\'")
+  :hook ((elixir-mode . lsp-deferred)
+         (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8"))))
+  :init
+  (setq lsp-elixir-suggest-specs nil)
+  (add-to-list 'exec-path "/usr/lib/elixir-ls/")
+  (build-hooks 'elixir-mode-hook 'mix-compile 'mix-run 'elixir-format))
 #+end_src
 
 ** Org mode
@@ -330,6 +348,8 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
 
 (require 'org-tempo)
 (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("bash" . "src bash"))
+(add-to-list 'org-structure-template-alist '("py" . "src python"))
 
 (require 'color)
 (set-face-attribute 'org-block nil :background
@@ -346,8 +366,8 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
 #+end_src
 
 ** C/C++
-*** Todo on this, fix use-package and lsp mode
 #+begin_src emacs-lisp
+; C/C++ mode, auto-loads lsp and lsp-ui given the file extensions
 (defun custom-c++-mode-hook ()
   (setq c++-tab-always-indent t)
   (setq c-basic-offset 4)
@@ -356,26 +376,26 @@ LSP mode for elixir using elixir-ls and sets some compile/run keyhooks
   (setq tab-width 4)
   (setq indent-tabs-mode t))
 
-(which-key-mode)
-(add-hook 'c-mode-common-hook 'custom-c++-mode-hook)
-(add-hook 'c++-mode-hook 'treemacs)
-
-; C-hook
-(defun my-c-mode-common-hook ()
-  ;; my customizations for all of c-mode, c++-mode, objc-mode, java-mode
-  (c-set-offset 'substatement-open 0)
-  ;; other customizations can go here
-
-  (setq c++-tab-always-indent t)
-  (setq c-basic-offset 4)                  ;; Default is 2
-  (setq c-indent-level 4)                  ;; Default is 2
-
-  (setq tab-stop-list '(4 8 12 16 20 24 28 32 36 40 44 48 52 56 60))
-  (setq tab-width 4)
-  (setq indent-tabs-mode t))  ; use spaces only if nil
-
-(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+(use-package c-mode
+  :mode ("\\.cpp\\'"
+         "\\.hpp\\'"
+         "\\.c\\'"
+         "\\.h\\'")
+  :hook ((c-mode . lsp-deferred)
+         (c-mode . custom-c++-mode-hook))
+  :init
+  (build-hooks 'c-mode-hook 'cpp-cmake-compile nil 'clang-format-buffer))
 #+end_src
+
+** TODO CMake
+#+begin_src emacs-lisp
+
+#+end_src
+** TODO Platformio (arduino development)
+#+begin_src emacs-lisp
+
+#+end_src
+
 
 ** Python
 #+begin_src emacs-lisp
