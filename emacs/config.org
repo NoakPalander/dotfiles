@@ -17,7 +17,9 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(clang-format+
+(setq package-selected-packages '(haskell-mode
+                                  lsp-haskell
+                                  clang-format+
                                   platformio-mode
                                   pyvenv
                                   page-break-lines
@@ -327,9 +329,19 @@ Elixir package configs
   :hook ((elixir-mode . lsp-deferred)
          (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8"))))
   :init
-  (setq lsp-elixir-suggest-specs nil)
+  (setq lsp-elixir-suggest-specs t)
   (add-to-list 'exec-path "/usr/lib/elixir-ls/")
   (build-hooks 'elixir-mode-hook 'mix-compile 'mix-run 'elixir-format))
+#+end_src
+
+** Haskell
+#+begin_src emacs-lisp
+(use-package haskell-mode
+  :mode ("\\.hs\\'")
+  :hook ((haskell-mode . lsp-deferred)
+         (haskell-literate-mode . lsp-deferred)))
+;:init
+  ;(build-hooks nil nil nil nil))
 #+end_src
 
 ** Org mode
