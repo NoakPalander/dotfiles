@@ -6,7 +6,7 @@
 
 ** TODO:
 - Dont open dashboard if a file was opened directly
-- Dont open scratch buffer and hide message buffer
+
 
 * Custom configuration for doom emacs
 
@@ -17,7 +17,9 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(haskell-mode
+(setq package-selected-packages '(ligature
+                                  undo-tree
+                                  haskell-mode
                                   lsp-haskell
                                   clang-format+
                                   platformio-mode
@@ -99,6 +101,7 @@ Some helper functions used
   (set-frame-parameter (selected-frame) 'alpha 100))
 
 (defun toggle-transparency (&optional _)
+  "Toggles the transparency between the default--transparency and full opacity."
   (interactive)
   (if (< (frame-parameter (selected-frame) 'alpha) 100)
       (disable-transparency)
@@ -192,7 +195,13 @@ do:root@localhost:" buffer-file-name))))
 Font & Theme
 #+begin_src emacs-lisp
 (set-frame-font "JetBrains Mono")
-(load-theme 'dracula)
+(load-theme 'doom-dracula)
+
+; Enable font ligatures
+(ligature-set-ligatures '(haskell-mode elixir-mode) '("==" "!=" "/=" "<-" "->"
+                                                          "-->" "<--" "=>"
+                                                          "==>" "<==" "++"
+                                                          ">=" "<=" "<<" "|>"))
 #+end_src
 
 Projectile
@@ -283,9 +292,15 @@ Tabbing
 
 ** Custom global keybindings
 #+begin_src emacs-lisp
+(global-set-key (kbd "C-c j") 'flycheck-list-errors)
 (global-set-key (kbd "C-x s") 'save-buffer)
-(global-set-key (kbd "C-c C-<up>") 'enlarge-window)     ; Increase window size in split
-(global-set-key (kbd "C-c C-<down>") 'shrink-window)    ; Decrease window size in split
+
+; Resizes windows horizontally and vertically
+(global-set-key (kbd "C-c C-<right>") 'enlarge-window-horizontally)
+(global-set-key (kbd "C-c C-<left>") 'shrink-window-horizontally)
+(global-set-key (kbd "C-c C-<up>") 'enlarge-window)
+(global-set-key (kbd "C-c C-<down>") 'shrink-window)
+
 (global-set-key (kbd "C-x t") 'rotate:main-horizontal)  ; Rotates layout to a stacked mode
 (global-set-key (kbd "M-o") 'ace-window)                ; aw
 (global-set-key (kbd "C-c n") 'generate-buffer)         ; new buffer
@@ -295,6 +310,9 @@ Tabbing
 (global-set-key (kbd "C-c l") 'select-current-line)     ; Selects the current line
 (global-set-key (kbd "C-c a") 'read-only-mode)          ; Toggles read-only-mode
 #+end_src
+
+#+RESULTS:
+: read-only-mode
 
 ** Centaur tabs
 #+begin_src emacs-lisp
@@ -318,7 +336,8 @@ Tabbing
   :after lsp-mode
   :ensure t
   :hook ((lsp-ui-mode . (lambda () (local-set-key (kbd "C-c d") 'lsp-ui-doc-hide)))
-         (lsp-ui-mode . (lambda () (local-set-key (kbd "C-c s") 'lsp-ui-doc-show)))))
+         (lsp-ui-mode . (lambda () (local-set-key (kbd "C-c s") 'lsp-ui-doc-show)))
+         (lsp-ui-mode . (lambda () (flycheck-list-errors)))))
 #+end_src
 
 ** Elixir
@@ -327,7 +346,8 @@ Elixir package configs
 (use-package elixir-mode
   :mode ("\\.ex\\'" "\\.exs\\'")
   :hook ((elixir-mode . lsp-deferred)
-         (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8"))))
+         (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8")))
+         (elixir-mode . ligature-mode))
   :init
   (setq lsp-elixir-suggest-specs t)
   (add-to-list 'exec-path "/usr/lib/elixir-ls/")
@@ -339,9 +359,10 @@ Elixir package configs
 (use-package haskell-mode
   :mode ("\\.hs\\'")
   :hook ((haskell-mode . lsp-deferred)
-         (haskell-literate-mode . lsp-deferred)))
-;:init
-  ;(build-hooks nil nil nil nil))
+         (haskell-literate-mode . lsp-deferred)
+         (haskell-mode . ligature-mode))
+  :init
+  (build-hooks 'haskell-mode-hook 'haskell-compile nil nil))
 #+end_src
 
 ** Org mode
@@ -362,6 +383,7 @@ Elixir package configs
 (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
 (add-to-list 'org-structure-template-alist '("bash" . "src bash"))
 (add-to-list 'org-structure-template-alist '("py" . "src python"))
+(add-to-list 'org-structure-template-alist '("hs" . "src haskell"))
 
 (require 'color)
 (set-face-attribute 'org-block nil :background
@@ -394,7 +416,8 @@ Elixir package configs
          "\\.c\\'"
          "\\.h\\'")
   :hook ((c-mode . lsp-deferred)
-         (c-mode . custom-c++-mode-hook))
+         (c-mode . custom-c++-mode-hook)
+         (c-mode . ligature-mode))
   :init
   (build-hooks 'c-mode-hook 'cpp-cmake-compile nil 'clang-format-buffer))
 #+end_src
