@@ -1,5 +1,5 @@
-configuration{
-    modi: "run,drun,window";
+configuration {
+    modi: "";
     lines: 5;
     font: "JetBrainsMono Nerd Font 12";
     show-icons: true;
@@ -9,10 +9,6 @@ configuration{
     location: 0;
     disable-history: false;
     hide-scrollbar: true;
-    display-drun: "   Apps ";
-    display-run: "   Run ";
-    display-window: " 﩯  window";
-    display-Network: " 󰤨  Network";
     sidebar-mode: true;
 }
 
@@ -42,7 +38,7 @@ inputbar {
 }
 
 prompt {
-    background-color: @blue;
+    background-color: #928374;
     padding: 6px;
     text-color: @bg-col;
     border-radius: 3px;
@@ -72,7 +68,7 @@ listview {
 element {
     padding: 5px;
     background-color: @bg-col;
-    text-color: @fg-col  ;
+    text-color: @fg-col;
 }
 
 element-icon {
@@ -98,5 +94,5 @@ button {
 
 button selected {
   background-color: @bg-col;
-  text-color: @blue;
+  text-color: #928374;
 }
