@@ -17,7 +17,11 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(ligature
+(setq package-selected-packages '(cargo-mode
+                                  cargo
+                                  rust-mode
+                                  minimap
+                                  ligature
                                   undo-tree
                                   haskell-mode
                                   lsp-haskell
@@ -194,14 +198,20 @@ do:root@localhost:" buffer-file-name))))
 
 Font & Theme
 #+begin_src emacs-lisp
-(set-frame-font "JetBrains Mono")
-(load-theme 'doom-dracula)
+(load-theme 'gruvbox-dark-medium)
+
+(if (daemonp)
+    (add-hook 'after-make-frame-functions
+              (lambda (frame)
+                (with-selected-frame frame
+                  (set-frame-font "JetBrains Mono"))))
+  (set-frame-font "Jetbrains Mono"))
 
 ; Enable font ligatures
-(ligature-set-ligatures '(haskell-mode elixir-mode) '("==" "!=" "/=" "<-" "->"
+(ligature-set-ligatures '(haskell-mode elixir-mode) '("==" "===" "!==" "!=" "/=" "<-" "->"
                                                           "-->" "<--" "=>"
                                                           "==>" "<==" "++"
-                                                          ">=" "<=" "<<" "|>"))
+                                                          ">=" "<=" "<<" ">>" "<>" "|>"))
 #+end_src
 
 Projectile
@@ -244,7 +254,6 @@ Tabbing
         x-underline-at-descent-line t
         centaur-tabs-set-close-button nil
         centaur-tabs-show-new-tab-button nil
-        ;centaur-tabs--buffer-show-groups t
         centaur-tabs-cycle-scope 'tabs
         centaur-tabs-set-modified-marker t
         centaur-tabs-modified-marker "●")
@@ -259,6 +268,13 @@ Tabbing
 #+begin_src emacs-lisp
 (use-package treemacs-all-the-icons
   :after treemacs)
+#+end_src
+
+**  Minimap
+#+begin_src emacs-lisp
+(use-package minimap
+  :config
+  (setq minimap-window-location 'right))
 #+end_src
 
 ** Company mode / LSP mode
@@ -292,6 +308,7 @@ Tabbing
 
 ** Custom global keybindings
 #+begin_src emacs-lisp
+(global-set-key (kbd "C-x C-r") 'replace-string)
 (global-set-key (kbd "C-c j") 'flycheck-list-errors)
 (global-set-key (kbd "C-x s") 'save-buffer)
 
@@ -306,13 +323,10 @@ Tabbing
 (global-set-key (kbd "C-c n") 'generate-buffer)         ; new buffer
 (global-set-key (kbd "C-w") 'clipboard-kill-region)     ; cut
 (global-set-key (kbd "C-c x") 'clipboard-yank)          ; paste
-(global-set-key (kbd "C-c t") 'treemacs)                ; start treemacs
+(global-set-key (kbd "C-c v") 'treemacs)                ; start treemacs
 (global-set-key (kbd "C-c l") 'select-current-line)     ; Selects the current line
 (global-set-key (kbd "C-c a") 'read-only-mode)          ; Toggles read-only-mode
 #+end_src
-
-#+RESULTS:
-: read-only-mode
 
 ** Centaur tabs
 #+begin_src emacs-lisp
@@ -333,11 +347,28 @@ Tabbing
   :diminish lsp-mode)
 
 (use-package lsp-ui
-  :after lsp-mode
+  :after lsp
   :ensure t
   :hook ((lsp-ui-mode . (lambda () (local-set-key (kbd "C-c d") 'lsp-ui-doc-hide)))
          (lsp-ui-mode . (lambda () (local-set-key (kbd "C-c s") 'lsp-ui-doc-show)))
-         (lsp-ui-mode . (lambda () (flycheck-list-errors)))))
+         (lsp-ui-mode . (lambda () (flycheck-list-errors)))
+         (lsp-ui-mode . lsp-mode))
+  :custom
+  (lsp-ui-doc-position 'bottom))
+
+
+(use-package lsp-treemacs
+  :after lsp
+  :init
+  (setq lsp-treemacs-symbols-position 'right))
+#+end_src
+
+** Ini-mode
+#+begin_src emacs-lisp
+(use-package ini-mode
+  :ensure t
+  :mode ("\\.ini\\'")
+  :hook ((ini-mode . rainbow-mode)))
 #+end_src
 
 ** Elixir
@@ -349,7 +380,6 @@ Elixir package configs
          (elixir-mode . (lambda () (setenv "LC_ALL" "en_US.UTF-8")))
          (elixir-mode . ligature-mode))
   :init
-  (setq lsp-elixir-suggest-specs t)
   (add-to-list 'exec-path "/usr/lib/elixir-ls/")
   (build-hooks 'elixir-mode-hook 'mix-compile 'mix-run 'elixir-format))
 #+end_src
@@ -399,6 +429,16 @@ Elixir package configs
   (build-hooks 'json-mode-hook nil nil 'json-pretty-print-buffer))
 #+end_src
 
+** Rust
+#+begin_src emacs-lisp
+(use-package rust-mode
+  :mode ("\\.rs\\'")
+  :hook ((rust-mode . lsp-deferred)
+         (rust-mode . ligature-mode))
+  :init
+  (build-hooks 'rust-mode-hook nil nil 'rust-format-buffer))
+#+end_src
+
 ** C/C++
 #+begin_src emacs-lisp
 ; C/C++ mode, auto-loads lsp and lsp-ui given the file extensions
@@ -434,6 +474,11 @@ Elixir package configs
 
 ** Python
 #+begin_src emacs-lisp
+(use-package python-mode
+  :ensure t
+  :init
+  (define-key python-mode-map (kbd "<backspace>") 'evil-delete-backward-char))
+
 (use-package pyvenv
   :ensure t
   :config
@@ -447,3 +492,6 @@ Elixir package configs
   (python-mode . lsp)
   :init)
 #+end_src
+
+#+RESULTS:
+| #[0 \211\207 [py--imenu-create-index-function imenu-create-index-function] 2] | er/add-python-mode-expansions | doom-modeline-env-setup-python | lsp |
