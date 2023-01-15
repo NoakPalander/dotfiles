@@ -17,7 +17,13 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(cargo-mode
+(setq package-selected-packages '(erlang
+                                  org-roam-ui
+                                  org-roam
+                                  julia-repl
+                                  lsp-julia
+                                  julia-mode
+                                  cargo-mode
                                   cargo
                                   rust-mode
                                   minimap
@@ -196,24 +202,6 @@ do:root@localhost:" buffer-file-name))))
   (set-mark (line-beginning-position)))
 #+end_src
 
-Font & Theme
-#+begin_src emacs-lisp
-(load-theme 'gruvbox-dark-medium)
-
-(if (daemonp)
-    (add-hook 'after-make-frame-functions
-              (lambda (frame)
-                (with-selected-frame frame
-                  (set-frame-font "JetBrains Mono"))))
-  (set-frame-font "Jetbrains Mono"))
-
-; Enable font ligatures
-(ligature-set-ligatures '(haskell-mode elixir-mode) '("==" "===" "!==" "!=" "/=" "<-" "->"
-                                                          "-->" "<--" "=>"
-                                                          "==>" "<==" "++"
-                                                          ">=" "<=" "<<" ">>" "<>" "|>"))
-#+end_src
-
 Projectile
 #+begin_src emacs-lisp
 (use-package projectile
@@ -258,10 +246,30 @@ Tabbing
         centaur-tabs-set-modified-marker t
         centaur-tabs-modified-marker "●")
 
+  (set-face-background 'centaur-tabs-active-bar-face "dark orange")
   (centaur-tabs-headline-match)
   (centaur-tabs-change-fonts "JetBrains Mono" 100)
   (centaur-tabs-group-by-projectile-project)
   (centaur-tabs-mode t))
+#+end_src
+
+** Font & Theme
+#+begin_src emacs-lisp
+(load-theme 'dracula)
+
+(if (daemonp)
+    (add-hook 'after-make-frame-functions
+              (lambda (frame)
+                (with-selected-frame frame
+                  (set-frame-font "JetBrains Mono"))))
+  (set-frame-font "Jetbrains Mono"))
+
+; Enable font ligatures
+(ligature-set-ligatures '(haskell-mode elixir-mode rust-mode) '("==" "===" "!==" "!="
+                                                                "/=" "<-" "->"
+                                                                "-->" "<--" "=>"
+                                                                "==>" "<==" "++"
+                                                                ">=" "<=" "<<" ">>" "<>" "|>"))
 #+end_src
 
 ** Treemacs
@@ -384,6 +392,24 @@ Elixir package configs
   (build-hooks 'elixir-mode-hook 'mix-compile 'mix-run 'elixir-format))
 #+end_src
 
+** Erlang
+#+begin_src emacs-lisp
+(use-package erlang-mode
+  :mode ("\\.erl\\'")
+  :hook (erlang-mode . lsp-deferred))
+#+end_src
+
+** Julia
+#+begin_src emacs-lisp
+(use-package lsp-julia
+  :config
+  (setq lsp-julia-default-environment "~/.julia/environments/v1.6"))
+
+(use-package julia-mode
+  :mode ("\\.jl\\'")
+  :hook ((julia-mode . lsp-deferred)))
+#+end_src
+
 ** Haskell
 #+begin_src emacs-lisp
 (use-package haskell-mode
@@ -393,6 +419,21 @@ Elixir package configs
          (haskell-mode . ligature-mode))
   :init
   (build-hooks 'haskell-mode-hook 'haskell-compile nil nil))
+#+end_src
+
+** Org roam
+#+begin_src emacs-lisp
+(use-package org-roam
+  :ensure t
+  :init
+  (setq org-roam-v2-ack t)
+
+  :custom
+  (org-roam-directory "~/Dev/Todo")
+  (org-roam-complete-everywhere t)
+
+  :config
+  (org-roam-setup))
 #+end_src
 
 ** Org mode
@@ -413,6 +454,8 @@ Elixir package configs
 (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
 (add-to-list 'org-structure-template-alist '("bash" . "src bash"))
 (add-to-list 'org-structure-template-alist '("py" . "src python"))
+(add-to-list 'org-structure-template-alist '("hs" . "src haskell"))
+(add-to-list 'org-structure-template-alist '("java" . "src java"))
 (add-to-list 'org-structure-template-alist '("hs" . "src haskell"))
 
 (require 'color)
@@ -436,7 +479,7 @@ Elixir package configs
   :hook ((rust-mode . lsp-deferred)
          (rust-mode . ligature-mode))
   :init
-  (build-hooks 'rust-mode-hook nil nil 'rust-format-buffer))
+  (build-hooks 'rust-mode-hook 'cargo-mode-build 'rust-run 'rust-format-buffer))
 #+end_src
 
 ** C/C++
@@ -466,7 +509,7 @@ Elixir package configs
 #+begin_src emacs-lisp
 
 #+end_src
-** TODO Platformio (arduino development)
+** TODO Platformio (embedded development)
 #+begin_src emacs-lisp
 
 #+end_src
@@ -474,11 +517,6 @@ Elixir package configs
 
 ** Python
 #+begin_src emacs-lisp
-(use-package python-mode
-  :ensure t
-  :init
-  (define-key python-mode-map (kbd "<backspace>") 'evil-delete-backward-char))
-
 (use-package pyvenv
   :ensure t
   :config
