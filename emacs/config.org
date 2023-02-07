@@ -450,6 +450,8 @@ Elixir package configs
   (build-hooks 'org-mode-hook 'org-export-dispatch 'org-edit-src-code nil)
   (setq org-support-shift-select t)
   (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)))
+  (define-key org-mode-map (kbd "C-c l p") #'org-latex-preview)
+  (define-key org-mode-map (kbd "C-c l") #'select-current-line)
   (global-org-modern-mode))
 
 (use-package org-tempo
@@ -476,6 +478,7 @@ Elixir package configs
 (use-package json-mode
   :ensure t
   :init
+  (setq js-indent-level 2)
   (build-hooks 'json-mode-hook nil nil 'json-pretty-print-buffer))
 #+end_src
 
@@ -509,7 +512,17 @@ Elixir package configs
          (c-mode . custom-c++-mode-hook)
          (c-mode . ligature-mode))
   :init
-  (build-hooks 'c-mode-hook 'cpp-cmake-compile nil 'clang-format-buffer))
+  (build-hooks 'c-mode-hook 'compile nil 'clang-format-buffer))
+#+end_src
+
+** Dap
+#+begin_src emacs-lisp
+(use-package dap-mode
+  :ensure t
+  :config
+  (require 'dap-gdb-lldb)
+  (dap-gdb-lldb-setup)
+  (define-key dap-mode-map (kbd "C-c d") 'dap-hydra))
 #+end_src
 
 ** TODO CMake
@@ -537,6 +550,3 @@ Elixir package configs
   (python-mode . lsp)
   :init)
 #+end_src
-
-#+RESULTS:
-| #[0 \211\207 [py--imenu-create-index-function imenu-create-index-function] 2] | er/add-python-mode-expansions | doom-modeline-env-setup-python | lsp |
