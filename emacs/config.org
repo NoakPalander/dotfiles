@@ -3,13 +3,7 @@
 #+email: noak.palander@protonmail.com
 #+property: header-args :tangle "config.el"
 
-
-** TODO:
-- Dont open dashboard if a file was opened directly
-
-
 * Custom configuration for doom emacs
-
 ** Packages
 #+begin_src emacs-lisp
 (require 'package)
@@ -17,7 +11,8 @@
 (package-initialize)
 
 ; Packages this configuration uses
-(setq package-selected-packages '(erlang
+(setq package-selected-packages '(go-mode
+                                  erlang
                                   org-roam-ui
                                   org-roam
                                   julia-repl
@@ -65,6 +60,7 @@
 ** Dashboard
 #+begin_src emacs-lisp
 (use-package dashboard
+  :if (< (length command-line-args) 2)
   :ensure t
   :init
   (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
@@ -246,7 +242,7 @@ Tabbing
         centaur-tabs-set-modified-marker t
         centaur-tabs-modified-marker "●")
 
-  (set-face-background 'centaur-tabs-active-bar-face "dark orange")
+  (set-face-background 'centaur-tabs-active-bar-face "#7AA2F7")
   (centaur-tabs-headline-match)
   (centaur-tabs-change-fonts "JetBrains Mono" 100)
   (centaur-tabs-group-by-projectile-project)
@@ -255,7 +251,7 @@ Tabbing
 
 ** Font & Theme
 #+begin_src emacs-lisp
-(load-theme 'dracula)
+(load-theme 'doom-tokyo-night t)
 
 (if (daemonp)
     (add-hook 'after-make-frame-functions
@@ -265,7 +261,7 @@ Tabbing
   (set-frame-font "Jetbrains Mono"))
 
 ; Enable font ligatures
-(ligature-set-ligatures '(haskell-mode elixir-mode rust-mode erlang-mode)
+(ligature-set-ligatures '(c-mode haskell-mode elixir-mode rust-mode erlang-mode go-mode)
                         '("==" "===" "!==" "!="
                           "/=" "<-" "->"
                           "-->" "<--" "=>"
@@ -381,6 +377,29 @@ Tabbing
   :hook ((ini-mode . rainbow-mode)))
 #+end_src
 
+** Golang
+#+begin_src emacs-lisp
+(defun golang-run ()
+  (interactive)
+  (compile "go run *.go" t))
+
+(defun golang-compile ()
+  (interactive)
+  (compile "go build" t))
+
+(defun golang-format ()
+  (interactive)
+  (compile "go fmt" t))
+
+(use-package go-mode
+  :ensure
+  :mode ("\\.go\\'")
+  :hook ((go-mode . lsp-deferred)
+         (go-mode . ligature-mode))
+  :init
+  (build-hooks 'go-mode-hook 'golang-compile 'golang-run 'golang-format))
+#+end_src
+
 ** Elixir
 Elixir package configs
 #+begin_src emacs-lisp
@@ -450,7 +469,7 @@ Elixir package configs
   (build-hooks 'org-mode-hook 'org-export-dispatch 'org-edit-src-code nil)
   (setq org-support-shift-select t)
   (org-babel-do-load-languages 'org-babel-load-languages '((emacs-lisp . t)))
-  (define-key org-mode-map (kbd "C-c l p") #'org-latex-preview)
+  (define-key org-mode-map (kbd "C-c p") #'org-latex-preview)
   (define-key org-mode-map (kbd "C-c l") #'select-current-line)
   (global-org-modern-mode))
 
